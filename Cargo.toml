@@ -1,0 +1,27 @@
+[package]
+name = "bloom-filter-benches"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+
+[dev-dependencies]
+rand = "0.8.5"
+rand_regex = "0.16.0"
+ahash = "0.8.6"
+criterion = { version = "0.5.1", features = ["html_reports"] }
+bloom = "0.3.2"
+bloomfilter = "1.0.13"
+probabilistic-collections = "0.7.0"
+fastbloom-rs = "0.5.9"
+sbbf-rs = "0.2.8"
+
+
+fastbloom = { path = "../fastbloom" }
+
+[[bench]]
+name = "bench_bloom_filter"
+harness = false 
