@@ -85,7 +85,8 @@ dependencies = [
  "probabilistic-collections",
  "rand 0.8.5",
  "rand_regex",
- "sbbf-rs",
+ "sbbf-rs-safe",
+ "xxhash-rust",
 ]
 
 [[package]]
@@ -270,7 +271,9 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 
 [[package]]
 name = "fastbloom"
-version = "0.3.0"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "488af810ad64b53446d732ff54b159c9870cee20b06ff2ebb58b3d265ed1349a"
 dependencies = [
  "rand 0.8.5",
  "siphasher 1.0.0",
@@ -653,6 +656,15 @@ checksum = "5525db49c7719816ac719ea8ffd0d0b4586db1a3f5d3e7751593230dacc642fd"
 dependencies = [
  "cpufeatures",
  "fastrange-rs",
+]
+
+[[package]]
+name = "sbbf-rs-safe"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9902ffeb2cff3f8c072c60c7d526ac9560fc9a66fe1dfc3c240eba5e2151ba3c"
+dependencies = [
+ "sbbf-rs",
 ]
 
 [[package]]

@@ -18,7 +18,6 @@ use std::collections::HashSet;
 use std::hash::BuildHasher;
 use std::hash::Hash;
 use std::iter::repeat;
-use wyhash::wyhash;
 
 use bloom_filter_benches::*;
 

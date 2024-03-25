@@ -14,9 +14,9 @@ bloomfilter = "1.0.13"
 probabilistic-collections = "0.7.0"
 fastbloom-rs = "0.5.9"
 sbbf-rs-safe = "0.3.2"
-wyhash = "0.5"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
-fastbloom = { path = "../fastbloom" }
+fastbloom = "0.5.1"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
