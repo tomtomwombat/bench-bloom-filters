@@ -59,8 +59,6 @@ fn run_bench_for_input<X: Hash, T: Container<X>>(
 }
 
 fn bench(c: &mut Criterion) {
-    // list_fp::<sbbf_rs_safe::Filter>();
-
     let sample_seed = 1234;
     let num_bytes = 262144;
     for seed in [1234, 9876] {
@@ -69,15 +67,15 @@ fn bench(c: &mut Criterion) {
         } else {
             "Non-Member"
         };
-
+        /*
         let mut group = c.benchmark_group(&format!(
-            "{} Check Speed vs Items in Bloom Filter ({}Kb Allocated, SipHash)",
+            "{} Check Speed vs Items ({}Kb Allocated, SipHash)",
             item_type,
             num_bytes / 1000
         ));
         group.plot_config(PlotConfiguration::default());
         for num_items in [
-            5000, 7500, 10_000, 15_000, 20_000, 25_000, 50_000, 75_000, 100_000,
+            2000, 3000, 5000, 7500, 10_000, 15_000, 20_000, 25_000, 50_000, 75_000, 100_000,
         ] {
             run_bench_for::<fastbloom::BloomFilter<512>>(&mut group, num_items, seed);
             run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
@@ -85,34 +83,34 @@ fn bench(c: &mut Criterion) {
             run_bench_for::<ProbBloomFilter<String>>(&mut group, num_items, seed);
         }
         group.finish();
-        /*
+
         let mut g2 = c.benchmark_group(&format!(
-            "{} Check Speed vs Items in Bloom Filter ({}Kb Allocated)",
+            "{} Check Speed vs Items ({}Kb Allocated)",
             item_type,
             num_bytes / 1000
         ));
         g2.plot_config(PlotConfiguration::default());
         for num_items in [
-            1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10_000, 15_000, 20_000, 25_000,
+            2000, 3000, 5000, 6000, 7000, 8000, 9000, 10_000, 15_000, 20_000, 25_000,
             50_000,
         ] {
             run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(
                 &mut g2, num_items, seed,
             );
-            run_bench_for::<sbbf_rs_safe::Filter>(&mut g2, num_items, seed);
-            // run_bench_for::<fastbloom_rs::BloomFilter>(&mut g2, num_items, seed);
+            run_bench_for::<fastbloom_rs::BloomFilter>(&mut g2, num_items, seed);
         }
         g2.finish();
         */
-        /*
+
         let mut g3 = c.benchmark_group(&format!(
-            "{} Check Speed vs Items in Bloom Filter ({}Kb Allocated)",
+            "{} Check Speed vs Items ({}Kb Allocated)",
             item_type,
             num_bytes / 1000
         ));
         g3.plot_config(PlotConfiguration::default());
         for num_items in [
-            2000, 5000, 10_000, 15_000, 20_000, 25_000, 50_000, 75_000, 100_000,
+            1000, 2000, 3000, 4000, 5000, 7500, 10_000, 12_500, 15_000, 20_000, 25_000, 50_000,
+            75_000, 100_000,
         ] {
             run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(
                 &mut g3, num_items, seed,
@@ -128,7 +126,6 @@ fn bench(c: &mut Criterion) {
             );
         }
         g3.finish();
-        */
     }
 }
 criterion_group!(
