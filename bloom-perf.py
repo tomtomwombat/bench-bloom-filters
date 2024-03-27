@@ -12,6 +12,9 @@ colors = {
     'fastbloom - 64': 'orange',
     'fastbloom': 'b',
     'fastbloom-rs': 'g',
+    'fastbloom - 64 - xxhash': 'purple',
+    'fastbloom - 512 - xxhash': 'b',
+    'sbbf': 'green',
     }
 directory = r"target\criterion" #bloomfilter (262144 bytes, %d items)_ get existing 1000\base\estimates.json
 
@@ -29,8 +32,8 @@ def get_non_reports(d):
      return [x for x in get_immediate_subdirectories(d) if x != 'report']
 
 for benches_name, title in zip(get_non_reports(directory), [
-    'Member Check Speed vs Items in Bloom Filter (262Kb Allocated, ahash)',
-    'Non-Member Check Speed vs Items in Bloom Filter (262Kb Allocated, ahash)']):
+    'Member Check Speed vs Items in Bloom Filter (262Kb Allocated, xxhash)',
+    'Non-Member Check Speed vs Items in Bloom Filter (262Kb Allocated, xxhash)']):
     
     for entity in get_non_reports( directory + '\\' + benches_name):
         if is_input(entity):
@@ -49,6 +52,7 @@ for benches_name, title in zip(get_non_reports(directory), [
             continue
         x, y = zip(*sorted(zip(x,y)))
         # if entity == 'fastbloom - 512': entity = 'fastbloom'
+        if entity == 'block_size_512': entity = 'fastbloom - 512 - xxhash'
         plt.plot(x, y, color=colors[entity], label=entity, linewidth=1.0)
 
                          

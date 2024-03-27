@@ -1,11 +1,7 @@
-use bloom_filter_benches::random_numbers;
-use std::collections::HashSet;
-
-use bloom_filter_benches::false_pos_rate_with_vals;
-use bloom_filter_benches::list_fp;
-use bloom_filter_benches::Container;
-use bloomfilter::Bloom;
+use bloom_filter_benches::*;
 
 fn main() {
-    list_fp::<fastbloom::BloomFilter<128>>();
+    list_fp::<fastbloom::BloomFilter<512, XXHashWrapper>>();
+    // list_fp::<fastbloom::BloomFilter<64, XXHashWrapper>>();
+    // list_fp::<sbbf_rs_safe::Filter>();
 }

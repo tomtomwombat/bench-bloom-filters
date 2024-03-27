@@ -12,6 +12,7 @@ use sbbf_rs_safe;
 use std::collections::HashSet;
 use std::hash::BuildHasher;
 use std::hash::Hash;
+use std::hash::Hasher;
 use std::iter::repeat;
 
 #[allow(dead_code)]
@@ -96,91 +97,121 @@ pub trait Container<X: Hash> {
     fn name() -> &'static str;
 }
 
-impl<X: Hash, H: BuildHasher + Default> Container<X> for BloomFilter<512, H> {
+macro_rules! impl_container_fastbloom {
+    ($($size:literal = $fn_name:ident = $hasher:ty),* $(,)*) => (
+        $(
+            impl<X: Hash> Container<X> for BloomFilter<$size, $hasher> {
+                #[inline]
+                fn check(&self, s: &X) -> bool {
+                    self.contains(s)
+                }
+                fn num_hashes(&self) -> usize {
+                    self.num_hashes() as usize
+                }
+                fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = X>>>(
+                    num_bits: usize,
+                    items: I,
+                ) -> Self {
+                    BloomFilter::with_num_bits(num_bits)
+                        .$fn_name()
+                        .hasher(<$hasher>::default())
+                        .items(items)
+                }
+                fn name() -> &'static str {
+                    stringify!($fn_name)
+                }
+            }
+        )*
+    )
+}
+impl_container_fastbloom!(
+    512 = block_size_512 = fastbloom::DefaultHasher,
+    256 = block_size_256 = fastbloom::DefaultHasher,
+    128 = block_size_128 = fastbloom::DefaultHasher,
+    64 = block_size_64 = fastbloom::DefaultHasher,
+    512 = block_size_512 = ahash::RandomState,
+    256 = block_size_256 = ahash::RandomState,
+    128 = block_size_128 = ahash::RandomState,
+    64 = block_size_64 = ahash::RandomState,
+);
+
+macro_rules! impl_xxh3_container_fastbloom {
+    ($($size:literal = $fn_name:ident),* $(,)*) => (
+        $(
+            impl Container<String> for BloomFilter<$size, XXHashWrapper> {
+                #[inline]
+                fn check(&self, s: &String) -> bool {
+                    self.contains(&xxhash_rust::xxh3::xxh3_64(s.as_bytes()))
+                }
+                fn num_hashes(&self) -> usize {
+                    self.num_hashes() as usize
+                }
+                fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = String>>>(
+                    num_bits: usize,
+                    items: I,
+                ) -> Self {
+                    BloomFilter::with_num_bits(num_bits)
+                        .$fn_name()
+                        .hasher(XXHashWrapper(0))
+                        .items(items.into_iter().map(|x| xxhash_rust::xxh3::xxh3_64(x.as_bytes())))
+                }
+                fn name() -> &'static str {
+                    stringify!($fn_name)
+                }
+            }
+
+            impl Container<u64> for BloomFilter<$size, XXHashWrapper> {
+                #[inline]
+                fn check(&self, s: &u64) -> bool {
+                    self.contains(&xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
+                }
+                fn num_hashes(&self) -> usize {
+                    self.num_hashes() as usize
+                }
+                fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = u64>>>(
+                    num_bits: usize,
+                    items: I,
+                ) -> Self {
+                    BloomFilter::with_num_bits(num_bits)
+                        .$fn_name()
+                        .hasher(XXHashWrapper(0))
+                        .items(items.into_iter().map(|x| xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes())))
+                }
+                fn name() -> &'static str {
+                    stringify!($fn_name)
+                }
+            }
+        )*
+    )
+}
+
+impl_xxh3_container_fastbloom!(
+    512 = block_size_512,
+    256 = block_size_256,
+    128 = block_size_128,
+    64 = block_size_64,
+);
+
+impl BuildHasher for XXHashWrapper {
+    type Hasher = XXHashWrapper;
     #[inline]
-    fn check(&self, s: &X) -> bool {
-        self.contains(s)
-    }
-    fn num_hashes(&self) -> usize {
-        self.num_hashes() as usize
-    }
-    fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = X>>>(
-        num_bits: usize,
-        items: I,
-    ) -> Self {
-        BloomFilter::with_num_bits(num_bits)
-            .block_size_512()
-            .hasher(H::default())
-            .items(items)
-    }
-    fn name() -> &'static str {
-        "fastbloom - 512"
+    fn build_hasher(&self) -> Self::Hasher {
+        XXHashWrapper(0)
     }
 }
 
-impl<X: Hash, H: BuildHasher + Default> Container<X> for BloomFilter<256, H> {
+pub struct XXHashWrapper(u64);
+impl Hasher for XXHashWrapper {
     #[inline]
-    fn check(&self, s: &X) -> bool {
-        self.contains(s)
+    fn finish(&self) -> u64 {
+        self.0
     }
-    fn num_hashes(&self) -> usize {
-        self.num_hashes() as usize
-    }
-    fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = X>>>(
-        num_bits: usize,
-        items: I,
-    ) -> Self {
-        BloomFilter::with_num_bits(num_bits)
-            .block_size_256()
-            .hasher(H::default())
-            .items(items)
-    }
-    fn name() -> &'static str {
-        "fastbloom - 256"
-    }
-}
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {}
 
-impl<X: Hash, H: BuildHasher + Default> Container<X> for BloomFilter<128, H> {
     #[inline]
-    fn check(&self, s: &X) -> bool {
-        self.contains(s)
-    }
-    fn num_hashes(&self) -> usize {
-        self.num_hashes() as usize
-    }
-    fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = X>>>(
-        num_bits: usize,
-        items: I,
-    ) -> Self {
-        BloomFilter::with_num_bits(num_bits)
-            .block_size_128()
-            .hasher(H::default())
-            .items(items)
-    }
-    fn name() -> &'static str {
-        "fastbloom - 128"
-    }
-}
-
-impl<X: Hash, H: BuildHasher + Default> Container<X> for BloomFilter<64, H> {
-    #[inline]
-    fn check(&self, s: &X) -> bool {
-        self.contains(s)
-    }
-    fn num_hashes(&self) -> usize {
-        self.num_hashes() as usize
-    }
-    fn new<I: IntoIterator<IntoIter = impl ExactSizeIterator<Item = X>>>(
-        num_bits: usize,
-        items: I,
-    ) -> Self {
-        BloomFilter::with_num_bits(num_bits)
-            .block_size_64()
-            .hasher(H::default())
-            .items(items)
-    }
-    fn name() -> &'static str {
-        "fastbloom - 64"
+    fn write_u64(&mut self, i: u64) {
+        self.0 = i;
     }
 }
 
@@ -321,7 +352,6 @@ impl Container<String> for sbbf_rs_safe::Filter {
         items: I,
     ) -> Self {
         let items = items.into_iter();
-        //let hashes = bloom::bloom::optimal_num_hashes(num_bits, items.len() as u32);
         let mut filter = sbbf_rs_safe::Filter::new(num_bits, 1);
         for x in items {
             filter.insert_hash(xxhash_rust::xxh3::xxh3_64(x.as_bytes()));
