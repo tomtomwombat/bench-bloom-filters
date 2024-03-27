@@ -16,7 +16,7 @@ fastbloom-rs = "0.5.9"
 sbbf-rs-safe = "0.3.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
-fastbloom = "0.5.1"
+fastbloom = { path = "../fastbloom" }
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }

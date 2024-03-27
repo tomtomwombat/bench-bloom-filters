@@ -207,7 +207,9 @@ impl Hasher for XXHashWrapper {
         self.0
     }
     #[inline]
-    fn write(&mut self, bytes: &[u8]) {}
+    fn write(&mut self, _: &[u8]) {
+        unreachable!()
+    }
 
     #[inline]
     fn write_u64(&mut self, i: u64) {
