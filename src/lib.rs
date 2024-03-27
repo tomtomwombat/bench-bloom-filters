@@ -13,7 +13,6 @@ use std::collections::HashSet;
 use std::hash::BuildHasher;
 use std::hash::Hash;
 use std::iter::repeat;
-use wyhash::wyhash;
 
 #[allow(dead_code)]
 pub fn false_pos_rate_with_vals<X: Hash + Eq + PartialEq>(
@@ -312,7 +311,7 @@ impl Container<String> for fastbloom_rs::BloomFilter {
 impl Container<String> for sbbf_rs_safe::Filter {
     #[inline]
     fn check(&self, s: &String) -> bool {
-        self.contains_hash(wyhash(s.as_bytes(), 0))
+        self.contains_hash(xxhash_rust::xxh3::xxh3_64(s.as_bytes()))
     }
     fn num_hashes(&self) -> usize {
         todo!()
@@ -322,10 +321,10 @@ impl Container<String> for sbbf_rs_safe::Filter {
         items: I,
     ) -> Self {
         let items = items.into_iter();
-        let hashes = bloom::bloom::optimal_num_hashes(num_bits, items.len() as u32);
-        let mut filter = sbbf_rs_safe::Filter::new(hashes as usize, items.len());
+        //let hashes = bloom::bloom::optimal_num_hashes(num_bits, items.len() as u32);
+        let mut filter = sbbf_rs_safe::Filter::new(num_bits, 1);
         for x in items {
-            filter.insert_hash(wyhash(x.as_bytes(), 0));
+            filter.insert_hash(xxhash_rust::xxh3::xxh3_64(x.as_bytes()));
         }
         filter
     }
@@ -337,7 +336,7 @@ impl Container<String> for sbbf_rs_safe::Filter {
 impl Container<u64> for sbbf_rs_safe::Filter {
     #[inline]
     fn check(&self, s: &u64) -> bool {
-        self.contains_hash(wyhash(&s.to_be_bytes(), 0))
+        self.contains_hash(xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
     }
     fn num_hashes(&self) -> usize {
         0
@@ -347,10 +346,9 @@ impl Container<u64> for sbbf_rs_safe::Filter {
         items: I,
     ) -> Self {
         let items = items.into_iter();
-        let hashes = bloom::bloom::optimal_num_hashes(num_bits, items.len() as u32);
-        let mut filter = sbbf_rs_safe::Filter::new(hashes as usize, items.len());
+        let mut filter = sbbf_rs_safe::Filter::new(num_bits, 1);
         for x in items {
-            filter.insert_hash(wyhash(&x.to_be_bytes(), 0));
+            filter.insert_hash(xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
         }
         filter
     }
