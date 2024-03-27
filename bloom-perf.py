@@ -16,7 +16,7 @@ colors = {
     'fastbloom - 512 - xxhash': 'b',
     'sbbf': 'green',
     }
-directory = r"target\criterion" #bloomfilter (262144 bytes, %d items)_ get existing 1000\base\estimates.json
+directory = r"target\criterion"
 
 def is_input(x):
     try:
@@ -32,8 +32,8 @@ def get_non_reports(d):
      return [x for x in get_immediate_subdirectories(d) if x != 'report']
 
 for benches_name, title in zip(get_non_reports(directory), [
-    'Member Check Speed vs Items in Bloom Filter (262Kb Allocated, xxhash)',
-    'Non-Member Check Speed vs Items in Bloom Filter (262Kb Allocated, xxhash)']):
+    'Member Check Speed vs Items in Bloom Filter (262Kb Allocated)',
+    'Non-Member Check Speed vs Items in Bloom Filter (262Kb Allocated)']):
     
     for entity in get_non_reports( directory + '\\' + benches_name):
         if is_input(entity):

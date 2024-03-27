@@ -92,9 +92,10 @@ fn bench(c: &mut Criterion) {
         for num_items in [
             2000, 3000, 5000, 6000, 7000, 8000, 9000, 10_000, 15_000, 20_000, 25_000, 50_000,
         ] {
-            // run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(&mut g2, num_items, seed, );
+            run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(
+                &mut g2, num_items, seed,
+            );
             // run_bench_for::<fastbloom::BloomFilter<64, ahash::RandomState>>(&mut g2, num_items, seed, );
-            run_bench_for::<fastbloom::BloomFilter<512, XXHashWrapper>>(&mut g2, num_items, seed);
             //run_bench_for::<fastbloom::BloomFilter<64, XXHashWrapper>>(&mut g2, num_items, seed, );
             //run_bench_for::<sbbf_rs_safe::Filter>(&mut g2, num_items, seed);
             // run_bench_for::<fastbloom_rs::BloomFilter>(&mut g2, num_items, seed);
