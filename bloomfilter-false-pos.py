@@ -21,7 +21,16 @@ import matplotlib.pyplot as plt
 import csv
 
 filters = [
-    ('test', 'b'),
+    ('fastbloom-512', 'b'),
+    ('fastbloom-256', 'mediumturquoise'),
+    ('fastbloom-128', 'green'),
+    ('fastbloom-64', 'purple'),
+    #('fastbloom', 'b'),
+    #('bloom', 'orange'),
+    #('probabilistic-collections', 'violet'),
+    #('bloomfilter', 'purple'),
+    #('sbbf', 'r'),
+    #('fastbloom-rs', 'g'),
     ]
 
 size = 262144
@@ -34,9 +43,10 @@ for (name, color) in filters:
         for row in rows:
             if int(row[1]) != size: continue
             data.append((int(row[0]), float(row[3]), int(row[2])))
+            
             fp.append(float(row[3]))
         x,y,z = zip(*sorted(data))
-        plt.plot(x, y, color=color, label=name, linewidth=2.0)
+        plt.plot(x, y, color=color, label=name, linewidth=1.0)
 
 plt.xlabel('Number of Items') 
 plt.ylabel('False Positive Rate') 

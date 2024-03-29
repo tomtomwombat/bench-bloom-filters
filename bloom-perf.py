@@ -3,8 +3,8 @@ import os
 import matplotlib.pyplot as plt 
 
 colors = {
-    'probabilistic-collections': 'purple',
-    'bloomfilter': 'r',
+    'probabilistic-collections': 'violet',
+    'bloomfilter': 'purple',
     'bloom': 'orange',
     'fastbloom - 512': 'b',
     'fastbloom - 256': 'purple',
@@ -12,9 +12,14 @@ colors = {
     'fastbloom - 64': 'orange',
     'fastbloom': 'b',
     'fastbloom-rs': 'g',
-    'fastbloom - 64 - xxhash': 'purple',
+    'fastbloom - 64 - xxhash': 'darkblue',
     'fastbloom - 512 - xxhash': 'b',
-    'sbbf': 'green',
+    'sbbf-rs-safe - xxhash': 'red',
+
+    'fastbloom - 512 - ahash': 'b',
+    'fastbloom - 256 - ahash': 'mediumturquoise',
+    'fastbloom - 128 - ahash': 'green',
+    'fastbloom - 64 - ahash': 'purple',
     }
 directory = r"target\criterion"
 
@@ -43,7 +48,6 @@ for benches_name, title in zip(get_non_reports(directory), [
         y = []
         for x_d in get_non_reports( directory + '\\' + benches_name + '\\' + entity):
             if not is_input(x_d): continue
-            
             x.append(int(x_d))
             with open(directory + '\\' + benches_name + '\\' + entity + '\\' + x_d + '\\base\\estimates.json') as f:
                 dic = json.load(f)

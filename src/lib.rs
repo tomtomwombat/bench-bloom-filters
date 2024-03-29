@@ -35,29 +35,33 @@ pub fn false_pos_rate_with_vals<X: Hash + Eq + PartialEq>(
 #[allow(dead_code)]
 pub fn list_fp<T: Container<u64>>() {
     let thresh = 0.1;
-    let amount = 100_000;
+    let amount = 10_000_000;
+    let mut num_items_base = 7;
+
     for bloom_size_bytes in [262144] {
         let mut fp = 0.0;
-        for num_items_base in (8..23).map(|x| 1 << x) {
+        while num_items_base < 24 {
+            num_items_base += 1;
+            let num_items = 1 << num_items_base;
             let all_num_items: Vec<usize> = if fp > 0.0 && fp < thresh {
-                let step = num_items_base >> 8;
-                ((num_items_base >> 1 + step)..(num_items_base << 1))
+                let step = num_items >> (64 / num_items_base);
+                ((num_items >> 2 + step)..(num_items << 1))
                     .step_by(step)
                     .collect()
             } else {
-                std::iter::once(num_items_base).collect()
+                std::iter::once(num_items).collect()
             };
-            for num_items in all_num_items {
+            for cur_num_items in all_num_items {
                 if num_items == 0 {
                     continue;
                 }
-                let sample_vals = random_numbers(num_items, 42);
+                let sample_vals = random_numbers(cur_num_items, 42);
 
                 let num_bits = bloom_size_bytes * 8;
-                let filter = T::new(num_bits, sample_vals.clone().into_iter()); //BloomFilter::builder512(num_bits).items(sample_vals.iter());
+                let filter = T::new(num_bits, sample_vals.clone().into_iter());
                 let control: HashSet<u64> = sample_vals.into_iter().collect();
                 fp = false_pos_rate_with_vals(&filter, &control, random_numbers(amount, 43));
-                print!("{:?}, ", num_items);
+                print!("{:?}, ", cur_num_items);
                 print!("{:?}, ", bloom_size_bytes);
                 print!("{:?}, ", filter.num_hashes());
                 print!("{:.8}", fp);
@@ -65,6 +69,7 @@ pub fn list_fp<T: Container<u64>>() {
                 if fp > thresh {
                     break;
                 }
+                num_items_base = u64::ilog2(cur_num_items as u64);
             }
             if fp > thresh {
                 break;
@@ -98,7 +103,7 @@ pub trait Container<X: Hash> {
 }
 
 macro_rules! impl_container_fastbloom {
-    ($($size:literal = $fn_name:ident = $hasher:ty),* $(,)*) => (
+    ($($size:literal = $fn_name:ident = $hasher:ty = $name:literal),* $(,)*) => (
         $(
             impl<X: Hash> Container<X> for BloomFilter<$size, $hasher> {
                 #[inline]
@@ -118,25 +123,25 @@ macro_rules! impl_container_fastbloom {
                         .items(items)
                 }
                 fn name() -> &'static str {
-                    stringify!($fn_name)
+                    $name
                 }
             }
         )*
     )
 }
 impl_container_fastbloom!(
-    512 = block_size_512 = fastbloom::DefaultHasher,
-    256 = block_size_256 = fastbloom::DefaultHasher,
-    128 = block_size_128 = fastbloom::DefaultHasher,
-    64 = block_size_64 = fastbloom::DefaultHasher,
-    512 = block_size_512 = ahash::RandomState,
-    256 = block_size_256 = ahash::RandomState,
-    128 = block_size_128 = ahash::RandomState,
-    64 = block_size_64 = ahash::RandomState,
+    512 = block_size_512 = fastbloom::DefaultHasher = "fastbloom",
+    256 = block_size_256 = fastbloom::DefaultHasher = "fastbloom - 256",
+    128 = block_size_128 = fastbloom::DefaultHasher = "fastbloom - 128",
+    64 = block_size_64 = fastbloom::DefaultHasher = "fastbloom - 64",
+    512 = block_size_512 = ahash::RandomState = "fastbloom - 512 - ahash",
+    256 = block_size_256 = ahash::RandomState = "fastbloom - 256 - ahash",
+    128 = block_size_128 = ahash::RandomState = "fastbloom - 128 - ahash",
+    64 = block_size_64 = ahash::RandomState = "fastbloom - 64 - ahash",
 );
 
 macro_rules! impl_xxh3_container_fastbloom {
-    ($($size:literal = $fn_name:ident),* $(,)*) => (
+    ($($size:literal = $fn_name:ident = $name:literal),* $(,)*) => (
         $(
             impl Container<String> for BloomFilter<$size, XXHashWrapper> {
                 #[inline]
@@ -156,7 +161,7 @@ macro_rules! impl_xxh3_container_fastbloom {
                         .items(items.into_iter().map(|x| xxhash_rust::xxh3::xxh3_64(x.as_bytes())))
                 }
                 fn name() -> &'static str {
-                    stringify!($fn_name)
+                    $name
                 }
             }
 
@@ -186,10 +191,10 @@ macro_rules! impl_xxh3_container_fastbloom {
 }
 
 impl_xxh3_container_fastbloom!(
-    512 = block_size_512,
-    256 = block_size_256,
-    128 = block_size_128,
-    64 = block_size_64,
+    512 = block_size_512 = "fastbloom - 512 - xxhash",
+    256 = block_size_256 = "fastbloom - 256 - xxhash",
+    128 = block_size_128 = "fastbloom - 128 - xxhash",
+    64 = block_size_64 = "fastbloom - 64 - xxhash",
 );
 
 impl BuildHasher for XXHashWrapper {
@@ -361,7 +366,7 @@ impl Container<String> for sbbf_rs_safe::Filter {
         filter
     }
     fn name() -> &'static str {
-        "sbbf"
+        "sbbf-rs-safe - xxhash"
     }
 }
 
