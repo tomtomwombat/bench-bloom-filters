@@ -7,14 +7,16 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-rand_regex = "0.16.0"
+rayon = "1.10.0"
+
 ahash = "0.8.6"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
 bloom = "0.3.2"
 bloomfilter = "1.0.13"
 probabilistic-collections = "0.7.0"
 fastbloom-rs = "0.5.9"
 sbbf-rs-safe = "0.3.2"
-xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 fastbloom = { path = "../fastbloom" }
 
@@ -23,4 +25,4 @@ criterion = { version = "0.5.1", features = ["html_reports"] }
 
 [[bench]]
 name = "bench_bloom_filter"
-harness = false 
+harness = false
