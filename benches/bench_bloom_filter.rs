@@ -4,20 +4,11 @@ use criterion::{
 };
 
 use ahash;
-use bloom::ASMS;
 use bloomfilter::Bloom;
-use fastbloom::BloomFilter;
 use fastbloom_rs;
-use fastbloom_rs::Hashes;
-use fastbloom_rs::Membership;
 use probabilistic_collections::bloom::BloomFilter as ProbBloomFilter;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
 use sbbf_rs_safe;
-use std::collections::HashSet;
-use std::hash::BuildHasher;
 use std::hash::Hash;
-use std::iter::repeat;
 
 use bloom_filter_benches::*;
 
@@ -80,10 +71,18 @@ fn bench(c: &mut Criterion) {
             run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
             run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
             run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom::BloomFilter<512>>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom::BloomFilter<256>>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom::BloomFilter<128>>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom::BloomFilter<64>>(&mut group, num_items, seed);
+            run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
+            run_bench_for::<fastbloom::BloomFilter<256, ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
+            run_bench_for::<fastbloom::BloomFilter<128, ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
+            run_bench_for::<fastbloom::BloomFilter<64, ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
         }
 
         group.finish();

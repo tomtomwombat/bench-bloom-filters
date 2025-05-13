@@ -17,26 +17,26 @@ from matplotlib import colormaps
 
 plt.rcParams['font.size'] = 18
 
-colors = colormaps['Accent']
-
-colors = colormaps['viridis']
+viridis = colormaps['viridis']
+magma = colormaps['cool']
 
 filters = [
-    #'bloom',
-    #'bloomfilter',
-    #'sbbf',
-    #'probabilistic-collections',
-    #'fastbloom-rs',
-    'fastbloom - 64',
-    'fastbloom - 128',
-    'fastbloom - 256',
-    'fastbloom',
+    ('sbbf', magma(0)),
+    ('fastbloom-rs', magma(1/ 5)),
+    ('bloom',  magma(2/ 5)),
+    ('bloomfilter', magma(3 / 5)),
+    ('probabilistic-collections', magma(4 /5)),
+
+    ('fastbloom - 64', viridis(0)),
+    ('fastbloom - 128', viridis(1/ 3)),
+    ('fastbloom - 256', viridis(2 /4)),
+    ('fastbloom', viridis(3/ 4)),
     ]
 
 fig, ax = plt.subplots()
 
 size = 16384
-for i, name in enumerate(filters):
+for i, (name, color) in enumerate(filters):
     data = []
     with open('BloomFilter-False-Positives/%s.csv' % name,'r') as csvfile: 
         rows = csv.reader(csvfile, delimiter = ',')
@@ -54,7 +54,6 @@ for i, name in enumerate(filters):
         max_y = [max(y[i-r:i+r+1])for i in range(r, len(y) - r)]
         smooth_y = [sum(y[i-r:i+r+1]) / (1 + 2*r) for i in range(r, len(y) - r)]
         x = x[r:len(x) - r]
-        color=colors(i / len(filters))
         ax.plot(x, smooth_y, color=color, label=name, linewidth=2.5)
         ax.fill_between(x, max_y, min_y, color = color, alpha = 0.15)
 
@@ -63,10 +62,12 @@ plt.ylabel('False Positive %')
 plt.title('Bloom Filter False Positive Rate (%d bytes size)' % size)
 
 # micro scale:
-#plt.ylim(0, 0.0004); plt.xlim(0, 20000)
+# plt.ylim(0, 0.0004)
+plt.ylim(0, 0.001)
+plt.xlim(0, 20000)
 
 # macro scale:
-plt.xlim(0, 65000)
+# plt.xlim(0, 65000)
 
 plt.grid()
 plt.legend(loc='upper left') 

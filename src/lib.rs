@@ -31,9 +31,9 @@ pub fn list_fp<T: Container<u64>>() -> Vec<(usize, f64)> {
 
 fn false_pos_rate_for<T: Container<u64>>(num_items: usize, size_bytes: usize) -> f64 {
     let num_bits = size_bytes * 8;
-    let filter = T::new(num_bits, random_numbers(num_items, 5), num_items);
+    let filter = T::new(num_bits, random_numbers(num_items, 53824), num_items);
 
-    let anti_vals = random_numbers(TRIALS, 7).map(|x| x + u32::MAX as u64);
+    let anti_vals = random_numbers(TRIALS / 100, 1234).map(|x| x + u32::MAX as u64);
     false_pos_rate(&filter, anti_vals)
 }
 

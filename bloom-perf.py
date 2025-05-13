@@ -3,22 +3,26 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 
-plt.rcParams['font.size'] = 14
+plt.rcParams['font.size'] = 12
 
-# colors = colormaps['magma']
-colors = colormaps['viridis']
+viridis = colormaps['viridis']
+magma = colormaps['cool']
 
-crates = [
-    #'probabilistic-collections',
-    #'bloomfilter',
-    #'bloom',
-    #'fastbloom-rs',
-    #'sbbf',
-    'fastbloom - 64',
-    'fastbloom - 128',
-    'fastbloom - 256',
-    'fastbloom',
-]
+filters = [
+    ('sbbf', magma(0)),
+    ('fastbloom-rs', magma(1/ 5)),
+    ('bloom',  magma(2/ 5)),
+    ('bloomfilter', magma(3 / 5)),
+    ('probabilistic-collections', magma(4 /5)),
+
+    ('fastbloom - 64', viridis(0)),
+    ('fastbloom - 128', viridis(1/ 3)),
+    ('fastbloom - 256', viridis(2 /4)),
+    ('fastbloom', viridis(3/ 4)),
+    ]
+
+filters = dict(filters)
+
 directory = r"target\criterion"
 
 def is_input(x):
@@ -51,7 +55,7 @@ for benches_name, title in zip(get_non_reports(directory), [
         if is_input(entity):
             continue
         
-        if entity not in crates:
+        if entity not in filters:
             continue
         
         x = []
@@ -83,7 +87,7 @@ for benches_name, title in zip(get_non_reports(directory), [
             ax.bar(
                 name, latency,
                 width=1.0, 
-                color=colors(i / len(names)), 
+                color=filters[name], 
                 align='center', 
                 edgecolor = 'black', 
                 linewidth = 1.0, 

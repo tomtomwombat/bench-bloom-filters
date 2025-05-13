@@ -52,14 +52,14 @@ macro_rules! impl_container_fastbloom {
     )
 }
 impl_container_fastbloom!(
-    512 = block_size_512 = fastbloom::DefaultHasher = "fastbloom",
-    256 = block_size_256 = fastbloom::DefaultHasher = "fastbloom - 256",
-    128 = block_size_128 = fastbloom::DefaultHasher = "fastbloom - 128",
-    64 = block_size_64 = fastbloom::DefaultHasher = "fastbloom - 64",
-    //512 = block_size_512 = ahash::RandomState = "fastbloom",
-    //256 = block_size_256 = ahash::RandomState = "fastbloom - 256",
-    //128 = block_size_128 = ahash::RandomState = "fastbloom - 128",
-    //64 = block_size_64 = ahash::RandomState = "fastbloom - 64",
+    512 = block_size_512 = fastbloom::DefaultHasher = "fastbloom - sip - 512",
+    256 = block_size_256 = fastbloom::DefaultHasher = "fastbloom - sip - 256",
+    128 = block_size_128 = fastbloom::DefaultHasher = "fastbloom - sip - 128",
+    64 = block_size_64 = fastbloom::DefaultHasher = "fastbloom - sip - 64",
+    512 = block_size_512 = ahash::RandomState = "fastbloom",
+    256 = block_size_256 = ahash::RandomState = "fastbloom - 256",
+    128 = block_size_128 = ahash::RandomState = "fastbloom - 128",
+    64 = block_size_64 = ahash::RandomState = "fastbloom - 64",
 );
 
 impl<X: Hash> Container<X> for Bloom<X> {
@@ -103,6 +103,7 @@ macro_rules! impl_xxh3_container_fastbloom {
                         .$fn_name()
                         .hasher(XXHashWrapper(0))
                         .expected_items(num_items);
+                    assert_eq!(res.as_slice().len(), num_bits / 64);
                     for x in items.into_iter() {
                         res.insert(& xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
                     }
