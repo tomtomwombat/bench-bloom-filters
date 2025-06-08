@@ -3,22 +3,19 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 
-plt.rcParams['font.size'] = 12
+plt.rcParams['font.size'] = 18
 
 viridis = colormaps['viridis']
-magma = colormaps['cool']
+magma = colormaps['magma']
 
 filters = [
     ('sbbf', magma(0)),
-    ('fastbloom-rs', magma(1/ 5)),
-    ('bloom',  magma(2/ 5)),
-    ('bloomfilter', magma(3 / 5)),
-    ('probabilistic-collections', magma(4 /5)),
+    ('fastbloom-rs', magma(0)),
+    ('bloom',  magma(0)),
+    ('bloomfilter', magma(0)),
+    ('probabilistic-collections', magma(0)),
 
-    ('fastbloom - 64', viridis(0)),
-    ('fastbloom - 128', viridis(1/ 3)),
-    ('fastbloom - 256', viridis(2 /4)),
-    ('fastbloom', viridis(3/ 4)),
+    ('fastbloom', viridis(2 / 4)),
     ]
 
 filters = dict(filters)

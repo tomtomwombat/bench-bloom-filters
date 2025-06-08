@@ -20,9 +20,9 @@ pub trait Container<X: Hash> {
 }
 
 macro_rules! impl_container_fastbloom {
-    ($($size:literal = $fn_name:ident = $hasher:ty = $name:literal),* $(,)*) => (
+    ($($hasher:ty = $name:literal),* $(,)*) => (
         $(
-            impl<X: Hash> Container<X> for BloomFilter<$size, $hasher> {
+            impl<X: Hash> Container<X> for BloomFilter<$hasher> {
                 #[inline]
                 fn check(&self, s: &X) -> bool {
                     self.contains(s)
@@ -36,7 +36,6 @@ macro_rules! impl_container_fastbloom {
                     num_items: usize,
                 ) -> Self {
                     let mut res = BloomFilter::with_num_bits(num_bits)
-                        .$fn_name()
                         .hasher(<$hasher>::default())
                         .expected_items(num_items);
                     for x in items.into_iter() {
@@ -52,14 +51,8 @@ macro_rules! impl_container_fastbloom {
     )
 }
 impl_container_fastbloom!(
-    512 = block_size_512 = fastbloom::DefaultHasher = "fastbloom - sip - 512",
-    256 = block_size_256 = fastbloom::DefaultHasher = "fastbloom - sip - 256",
-    128 = block_size_128 = fastbloom::DefaultHasher = "fastbloom - sip - 128",
-    64 = block_size_64 = fastbloom::DefaultHasher = "fastbloom - sip - 64",
-    512 = block_size_512 = ahash::RandomState = "fastbloom",
-    256 = block_size_256 = ahash::RandomState = "fastbloom - 256",
-    128 = block_size_128 = ahash::RandomState = "fastbloom - 128",
-    64 = block_size_64 = ahash::RandomState = "fastbloom - 64",
+    fastbloom::DefaultHasher = "fastbloom",
+    ahash::RandomState = "fastbloom",
 );
 
 impl<X: Hash> Container<X> for Bloom<X> {
@@ -83,46 +76,28 @@ impl<X: Hash> Container<X> for Bloom<X> {
     }
 }
 
-macro_rules! impl_xxh3_container_fastbloom {
-    ($($size:literal = $fn_name:ident = $name:literal),* $(,)*) => (
-        $(
-            impl Container<u64> for BloomFilter<$size, XXHashWrapper> {
-                #[inline]
-                fn check(&self, s: &u64) -> bool {
-                    self.contains(&xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
-                }
-                fn num_hashes(&self) -> usize {
-                    self.num_hashes() as usize
-                }
-                fn new<I: IntoIterator<Item = u64>>(
-                    num_bits: usize,
-                    items: I,
-                    num_items: usize,
-                ) -> Self {
-                    let mut res = BloomFilter::with_num_bits(num_bits)
-                        .$fn_name()
-                        .hasher(XXHashWrapper(0))
-                        .expected_items(num_items);
-                    assert_eq!(res.as_slice().len(), num_bits / 64);
-                    for x in items.into_iter() {
-                        res.insert(& xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
-                    }
-                    res
-                }
-                fn name() -> &'static str {
-                    stringify!($fn_name)
-                }
-            }
-        )*
-    )
+impl Container<u64> for BloomFilter<XXHashWrapper> {
+    #[inline]
+    fn check(&self, s: &u64) -> bool {
+        self.contains(&xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
+    }
+    fn num_hashes(&self) -> usize {
+        self.num_hashes() as usize
+    }
+    fn new<I: IntoIterator<Item = u64>>(num_bits: usize, items: I, num_items: usize) -> Self {
+        let mut res = BloomFilter::with_num_bits(num_bits)
+            .hasher(XXHashWrapper(0))
+            .expected_items(num_items);
+        assert_eq!(res.as_slice().len(), num_bits / 64);
+        for x in items.into_iter() {
+            res.insert(&xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
+        }
+        res
+    }
+    fn name() -> &'static str {
+        "fastbloom - xxhash"
+    }
 }
-
-impl_xxh3_container_fastbloom!(
-    512 = block_size_512 = "fastbloom - 512 - xxhash",
-    256 = block_size_256 = "fastbloom - 256 - xxhash",
-    128 = block_size_128 = "fastbloom - 128 - xxhash",
-    64 = block_size_64 = "fastbloom - 64 - xxhash",
-);
 
 impl BuildHasher for XXHashWrapper {
     type Hasher = XXHashWrapper;

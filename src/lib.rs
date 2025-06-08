@@ -7,6 +7,7 @@ mod container;
 pub use container::{Container, XXHashWrapper};
 
 const TRIALS: usize = 200_000_000;
+const STEPS: usize = 128;
 
 pub fn list_fp<T: Container<u64>>() -> Vec<(usize, f64)> {
     let size_bytes = 1 << 16;
@@ -16,7 +17,7 @@ pub fn list_fp<T: Container<u64>>() -> Vec<(usize, f64)> {
         .map(|x| {
             let num_items = 1 << *x;
             let prev_num_items = num_items / 2;
-            let step = std::cmp::max(1, prev_num_items / 128);
+            let step = std::cmp::max(1, prev_num_items / STEPS);
             ((prev_num_items + step)..=num_items)
                 .step_by(step)
                 .map(|sub_items| {
@@ -33,7 +34,7 @@ fn false_pos_rate_for<T: Container<u64>>(num_items: usize, size_bytes: usize) ->
     let num_bits = size_bytes * 8;
     let filter = T::new(num_bits, random_numbers(num_items, 53824), num_items);
 
-    let anti_vals = random_numbers(TRIALS / 100, 1234).map(|x| x + u32::MAX as u64);
+    let anti_vals = random_numbers(TRIALS, 1234).map(|x| x + u32::MAX as u64);
     false_pos_rate(&filter, anti_vals)
 }
 

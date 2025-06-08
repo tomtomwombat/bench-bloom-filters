@@ -13,14 +13,15 @@ fn write_false_pos_data<T: Container<u64>>() -> std::io::Result<()> {
 }
 
 fn main() -> std::io::Result<()> {
+    /*
     write_false_pos_data::<bloom::BloomFilter>()?;
     write_false_pos_data::<sbbf_rs_safe::Filter>()?;
     write_false_pos_data::<bloomfilter::Bloom<u64>>()?;
-    write_false_pos_data::<fastbloom_rs::BloomFilter>()?;
     write_false_pos_data::<probabilistic_collections::bloom::BloomFilter<u64>>()?;
-    write_false_pos_data::<fastbloom::BloomFilter<512, ahash::RandomState>>()?;
-    write_false_pos_data::<fastbloom::BloomFilter<256, ahash::RandomState>>()?;
-    write_false_pos_data::<fastbloom::BloomFilter<128, ahash::RandomState>>()?;
-    write_false_pos_data::<fastbloom::BloomFilter<64, ahash::RandomState>>()?;
+    */
+
+    // write_false_pos_data::<fastbloom_rs::BloomFilter>()?;
+
+    write_false_pos_data::<fastbloom::BloomFilter<ahash::RandomState>>()?;
     Ok(())
 }

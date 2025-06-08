@@ -3,7 +3,6 @@ use criterion::{
     Criterion, PlotConfiguration,
 };
 
-use ahash;
 use bloomfilter::Bloom;
 use fastbloom_rs;
 use probabilistic_collections::bloom::BloomFilter as ProbBloomFilter;
@@ -36,6 +35,7 @@ fn run_bench_for_input<X: Hash, T: Container<X>>(
 ) {
     let num_bits = NUM_BYTES * 8;
     let bloom: T = Container::new(num_bits, data, num_items);
+    println!("{:?}", bloom.num_hashes());
     let sample_vals = bench_data.into_iter().collect::<Vec<X>>();
     group.bench_with_input(
         BenchmarkId::new(T::name(), num_items),
@@ -65,24 +65,18 @@ fn bench(c: &mut Criterion) {
             NUM_BYTES / 1000
         ));
         group.plot_config(PlotConfiguration::default());
-        for num_items in [100, 1_000, 10_000, 100_000] {
+        for num_items in [40_000] {
+            run_bench_for::<fastbloom::BloomFilter<ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
+
             run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
             run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
             run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
+
             run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
-            run_bench_for::<fastbloom::BloomFilter<512, ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
-            run_bench_for::<fastbloom::BloomFilter<256, ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
-            run_bench_for::<fastbloom::BloomFilter<128, ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
-            run_bench_for::<fastbloom::BloomFilter<64, ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
+
+            // run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
         }
 
         group.finish();

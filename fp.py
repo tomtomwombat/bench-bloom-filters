@@ -18,19 +18,17 @@ from matplotlib import colormaps
 plt.rcParams['font.size'] = 18
 
 viridis = colormaps['viridis']
-magma = colormaps['cool']
+magma = colormaps['magma']
 
 filters = [
-    ('sbbf', magma(0)),
-    ('fastbloom-rs', magma(1/ 5)),
-    ('bloom',  magma(2/ 5)),
+    
+    ('sbbf', magma(1 / 5)),
+    #('fastbloom-rs', magma(1/ 5)),
+    ('bloom',  magma(2 / 5)),
     ('bloomfilter', magma(3 / 5)),
     ('probabilistic-collections', magma(4 /5)),
-
-    ('fastbloom - 64', viridis(0)),
-    ('fastbloom - 128', viridis(1/ 3)),
-    ('fastbloom - 256', viridis(2 /4)),
-    ('fastbloom', viridis(3/ 4)),
+    
+    ('fastbloom', viridis(2 / 4)),
     ]
 
 fig, ax = plt.subplots()
@@ -61,13 +59,13 @@ plt.xlabel('Number of Items in Bloom Filter')
 plt.ylabel('False Positive %') 
 plt.title('Bloom Filter False Positive Rate (%d bytes size)' % size)
 
-# micro scale:
-# plt.ylim(0, 0.0004)
-plt.ylim(0, 0.001)
-plt.xlim(0, 20000)
-
-# macro scale:
-# plt.xlim(0, 65000)
+micro = False
+if micro:
+    # plt.ylim(0, 0.0004)
+    plt.ylim(0, 0.001)
+    plt.xlim(0, 20000)
+else:
+    plt.xlim(0, 65000)
 
 plt.grid()
 plt.legend(loc='upper left') 
