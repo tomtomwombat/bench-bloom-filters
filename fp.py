@@ -28,6 +28,7 @@ filters = [
     ('bloomfilter', magma(3 / 5)),
     ('probabilistic-collections', magma(4 /5)),
     
+    #('fastbloom-old', viridis(4 / 4)),
     ('fastbloom', viridis(2 / 4)),
     ]
 
@@ -47,18 +48,20 @@ for i, (name, color) in enumerate(filters):
         x,y = zip(*sorted(data))
         
         r = 2
-    
+
+        y = [0.00000000001 + u for u in y]
         min_y = [min(y[i-r:i+r+1])for i in range(r, len(y) - r)]
         max_y = [max(y[i-r:i+r+1])for i in range(r, len(y) - r)]
         smooth_y = [sum(y[i-r:i+r+1]) / (1 + 2*r) for i in range(r, len(y) - r)]
         x = x[r:len(x) - r]
         ax.plot(x, smooth_y, color=color, label=name, linewidth=2.5)
         ax.fill_between(x, max_y, min_y, color = color, alpha = 0.15)
+        ax.set_yscale('log')
 
 plt.xlabel('Number of Items in Bloom Filter') 
-plt.ylabel('False Positive %') 
+plt.ylabel('False Positive %')
 plt.title('Bloom Filter False Positive Rate (%d bytes size)' % size)
-
+'''
 micro = False
 if micro:
     # plt.ylim(0, 0.0004)
@@ -66,7 +69,7 @@ if micro:
     plt.xlim(0, 20000)
 else:
     plt.xlim(0, 65000)
-
+'''
 plt.grid()
 plt.legend(loc='upper left') 
 plt.show()

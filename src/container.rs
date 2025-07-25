@@ -15,7 +15,8 @@ use std::hash::Hasher;
 pub trait Container<X: Hash> {
     fn check(&self, s: &X) -> bool;
     fn num_hashes(&self) -> usize;
-    fn new<I: IntoIterator<Item = X>>(num_bits: usize, items: I, num_items: usize) -> Self;
+    fn new(num_bits: usize, num_items: usize) -> Self;
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I);
     fn name() -> &'static str;
 }
 
@@ -30,18 +31,18 @@ macro_rules! impl_container_fastbloom {
                 fn num_hashes(&self) -> usize {
                     self.num_hashes() as usize
                 }
-                fn new<I: IntoIterator<Item = X>>(
+                fn new(
                     num_bits: usize,
-                    items: I,
                     num_items: usize,
                 ) -> Self {
-                    let mut res = BloomFilter::with_num_bits(num_bits)
+                    BloomFilter::with_num_bits(num_bits)
                         .hasher(<$hasher>::default())
-                        .expected_items(num_items);
-                    for x in items.into_iter() {
-                        res.insert(&x);
+                        .expected_items(num_items)
+                }
+                fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
+                    for x in items {
+                        self.insert(&x);
                     }
-                    res
                 }
                 fn name() -> &'static str {
                     $name
@@ -63,13 +64,13 @@ impl<X: Hash> Container<X> for Bloom<X> {
     fn num_hashes(&self) -> usize {
         self.number_of_hash_functions() as usize
     }
-    fn new<I: IntoIterator<Item = X>>(num_bits: usize, items: I, num_items: usize) -> Self {
-        let items = items.into_iter();
-        let mut filter = Bloom::<X>::new(num_bits / 8, num_items);
-        for x in items {
-            filter.set(&x);
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        Bloom::<X>::new(num_bits / 8, num_items)
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
+        for x in items.into_iter() {
+            self.set(&x);
         }
-        filter
     }
     fn name() -> &'static str {
         "bloomfilter"
@@ -84,15 +85,16 @@ impl Container<u64> for BloomFilter<XXHashWrapper> {
     fn num_hashes(&self) -> usize {
         self.num_hashes() as usize
     }
-    fn new<I: IntoIterator<Item = u64>>(num_bits: usize, items: I, num_items: usize) -> Self {
-        let mut res = BloomFilter::with_num_bits(num_bits)
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        let res = BloomFilter::with_num_bits(num_bits)
             .hasher(XXHashWrapper(0))
             .expected_items(num_items);
-        assert_eq!(res.as_slice().len(), num_bits / 64);
-        for x in items.into_iter() {
-            res.insert(&xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
-        }
         res
+    }
+    fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
+        for x in items {
+            self.insert(&xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
+        }
     }
     fn name() -> &'static str {
         "fastbloom - xxhash"
@@ -130,15 +132,15 @@ impl Container<u64> for sbbf_rs_safe::Filter {
         self.contains_hash(xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
     }
     fn num_hashes(&self) -> usize {
-        0
+        8
     }
-    fn new<I: IntoIterator<Item = u64>>(num_bits: usize, items: I, _num_items: usize) -> Self {
-        let items = items.into_iter();
-        let mut filter = sbbf_rs_safe::Filter::new(num_bits, 1);
+    fn new(num_bits: usize, _num_items: usize) -> Self {
+        sbbf_rs_safe::Filter::new(num_bits, 1)
+    }
+    fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
         for x in items {
-            filter.insert_hash(xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
+            self.insert_hash(xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
         }
-        filter
     }
     fn name() -> &'static str {
         "sbbf"
@@ -153,15 +155,15 @@ impl Container<u64> for fastbloom_rs::BloomFilter {
     fn num_hashes(&self) -> usize {
         self.hashes() as usize
     }
-    fn new<I: IntoIterator<Item = u64>>(num_bits: usize, items: I, num_items: usize) -> Self {
-        let items = items.into_iter();
+    fn new(num_bits: usize, num_items: usize) -> Self {
         let hashes = bloom::bloom::optimal_num_hashes(num_bits, num_items as u32);
-        let mut filter = fastbloom_rs::FilterBuilder::from_size_and_hashes(num_bits as u64, hashes)
-            .build_bloom_filter();
+        fastbloom_rs::FilterBuilder::from_size_and_hashes(num_bits as u64, hashes)
+            .build_bloom_filter()
+    }
+    fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
         for x in items {
-            filter.add(&x.to_be_bytes());
+            self.add(&x.to_be_bytes());
         }
-        filter
     }
     fn name() -> &'static str {
         "fastbloom-rs"
@@ -176,14 +178,14 @@ impl<X: Hash> Container<X> for bloom::BloomFilter {
     fn num_hashes(&self) -> usize {
         self.num_hashes() as usize
     }
-    fn new<I: IntoIterator<Item = X>>(num_bits: usize, items: I, num_items: usize) -> Self {
-        let items = items.into_iter();
+    fn new(num_bits: usize, num_items: usize) -> Self {
         let hashes = bloom::bloom::optimal_num_hashes(num_bits, num_items as u32);
-        let mut filter = bloom::BloomFilter::with_size(num_bits, hashes);
+        bloom::BloomFilter::with_size(num_bits, hashes)
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
         for x in items {
-            filter.insert(&x);
+            self.insert(&x);
         }
-        filter
     }
     fn name() -> &'static str {
         "bloom"
@@ -198,13 +200,13 @@ impl<X: Hash> Container<X> for ProbBloomFilter<X> {
     fn num_hashes(&self) -> usize {
         self.hasher_count() as usize
     }
-    fn new<I: IntoIterator<Item = X>>(num_bits: usize, items: I, num_items: usize) -> Self {
-        let items = items.into_iter();
-        let mut filter = ProbBloomFilter::<X>::from_item_count(num_bits, num_items);
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        ProbBloomFilter::<X>::from_item_count(num_bits, num_items)
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
         for x in items {
-            filter.insert(&x);
+            self.insert(&x);
         }
-        filter
     }
     fn name() -> &'static str {
         "probabilistic-collections"

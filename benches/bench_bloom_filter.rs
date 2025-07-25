@@ -22,8 +22,8 @@ fn run_bench_for<T: Container<u64>>(
     run_bench_for_input::<u64, T>(
         group,
         num_items,
-        random_numbers(num_items, seed),
-        random_numbers(10, 1234),
+        random_numbers(seed).take(num_items),
+        random_numbers(1234).take(10),
     )
 }
 
@@ -34,7 +34,8 @@ fn run_bench_for_input<X: Hash, T: Container<X>>(
     bench_data: impl IntoIterator<Item = X>,
 ) {
     let num_bits = NUM_BYTES * 8;
-    let bloom: T = Container::new(num_bits, data, num_items);
+    let mut bloom: T = Container::new(num_bits, num_items);
+    bloom.extend(data.into_iter());
     println!("{:?}", bloom.num_hashes());
     let sample_vals = bench_data.into_iter().collect::<Vec<X>>();
     group.bench_with_input(
@@ -70,11 +71,11 @@ fn bench(c: &mut Criterion) {
                 &mut group, num_items, seed,
             );
 
-            run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
-            run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
-            run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
+            //run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
+            //run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
+            //run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
 
-            run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
+            //run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
 
             // run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
         }

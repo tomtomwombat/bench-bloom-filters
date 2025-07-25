@@ -6,22 +6,43 @@ use std::hash::Hash;
 mod container;
 pub use container::{Container, XXHashWrapper};
 
-const TRIALS: usize = 200_000_000;
+const TRIALS: usize = 2_000_000_000;
 const STEPS: usize = 128;
 
 pub fn list_fp<T: Container<u64>>() -> Vec<(usize, f64)> {
-    let size_bytes = 1 << 16;
-    let log_num_items = (3..=16).collect::<Vec<_>>();
+    let mag = 12;
+    let size_bytes = 1 << mag;
+    let num_bits = size_bytes * 8;
+    let log_num_items = (1..=mag).collect::<Vec<_>>();
     log_num_items
         .par_iter()
         .map(|x| {
             let num_items = 1 << *x;
             let prev_num_items = num_items / 2;
             let step = std::cmp::max(1, prev_num_items / STEPS);
-            ((prev_num_items + step)..=num_items)
+            let init_num_items = prev_num_items + step;
+
+            let mut items = random_numbers(53824).into_iter();
+            let mut filter = T::new(num_bits, init_num_items);
+            filter.extend(take(&mut items, prev_num_items));
+
+            (init_num_items..=num_items)
                 .step_by(step)
                 .map(|sub_items| {
-                    let fp = false_pos_rate_for::<T>(sub_items, size_bytes);
+                    let empty_filter = T::new(num_bits, sub_items);
+                    if empty_filter.num_hashes() != filter.num_hashes() {
+                        items = random_numbers(53824);
+                        filter = empty_filter;
+                        filter.extend(take(&mut items, sub_items));
+                    } else {
+                        filter.extend(take(&mut items, step));
+                    }
+                    /*
+                    let mut items = random_numbers(53824).into_iter();
+                    let mut filter = T::new(num_bits, sub_items);
+                    filter.extend(take(&mut items, sub_items));
+                    */
+                    let fp = false_pos_rate_for::<T>(&filter);
                     (sub_items, fp)
                 })
                 .collect::<Vec<_>>()
@@ -30,12 +51,18 @@ pub fn list_fp<T: Container<u64>>() -> Vec<(usize, f64)> {
         .collect::<Vec<_>>()
 }
 
-fn false_pos_rate_for<T: Container<u64>>(num_items: usize, size_bytes: usize) -> f64 {
-    let num_bits = size_bytes * 8;
-    let filter = T::new(num_bits, random_numbers(num_items, 53824), num_items);
+fn take<T: Iterator<Item = u64>>(
+    iter: &mut T,
+    num: usize,
+) -> impl Iterator<Item = u64> + use<'_, T> {
+    (0..=num).map(|_| iter.next().unwrap())
+}
 
-    let anti_vals = random_numbers(TRIALS, 1234).map(|x| x + u32::MAX as u64);
-    false_pos_rate(&filter, anti_vals)
+fn false_pos_rate_for<T: Container<u64>>(filter: &T) -> f64 {
+    let anti_vals = random_numbers(1234)
+        .take(TRIALS)
+        .map(|x| x + u32::MAX as u64);
+    false_pos_rate(filter, anti_vals)
 }
 
 fn false_pos_rate<X: Hash>(
@@ -51,7 +78,7 @@ fn false_pos_rate<X: Hash>(
     (false_positives as f64) / (total as f64)
 }
 
-pub fn random_numbers(num: usize, seed: u64) -> impl Iterator<Item = u64> {
+pub fn random_numbers(seed: u64) -> impl Iterator<Item = u64> {
     let mut rng = StdRng::seed_from_u64(seed);
-    (0..=num).map(move |_| rng.gen::<u32>() as u64)
+    (0..=usize::MAX).map(move |_| rng.gen::<u32>() as u64)
 }
