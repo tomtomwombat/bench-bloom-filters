@@ -70,12 +70,15 @@ fn bench(c: &mut Criterion) {
             run_bench_for::<fastbloom::BloomFilter<ahash::RandomState>>(
                 &mut group, num_items, seed,
             );
+            run_bench_for::<fastbloom::AtomicBloomFilter<ahash::RandomState>>(
+                &mut group, num_items, seed,
+            );
 
-            //run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
-            //run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
-            //run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
+            run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
+            run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
+            run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
 
-            //run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
+            run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
 
             // run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
         }

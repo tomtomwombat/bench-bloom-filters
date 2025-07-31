@@ -1,5 +1,6 @@
 use bloom::ASMS;
 use bloomfilter::Bloom;
+use fastbloom::AtomicBloomFilter;
 use fastbloom::BloomFilter;
 use fastbloom_rs;
 use fastbloom_rs::Hashes;
@@ -55,6 +56,29 @@ impl_container_fastbloom!(
     fastbloom::DefaultHasher = "fastbloom",
     ahash::RandomState = "fastbloom",
 );
+
+impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
+    #[inline]
+    fn check(&self, s: &X) -> bool {
+        self.contains(s)
+    }
+    fn num_hashes(&self) -> usize {
+        self.num_hashes() as usize
+    }
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        AtomicBloomFilter::with_num_bits(num_bits)
+            .hasher(ahash::RandomState::default())
+            .expected_items(num_items)
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
+        for x in items {
+            self.insert(&x);
+        }
+    }
+    fn name() -> &'static str {
+        "fastbloom (Atomic)"
+    }
+}
 
 impl<X: Hash> Container<X> for Bloom<X> {
     #[inline]
@@ -210,5 +234,26 @@ impl<X: Hash> Container<X> for ProbBloomFilter<X> {
     }
     fn name() -> &'static str {
         "probabilistic-collections"
+    }
+}
+
+impl Container<u64> for crate::RandomFilter {
+    #[inline]
+    fn check(&self, s: &u64) -> bool {
+        self.contains()
+    }
+    fn num_hashes(&self) -> usize {
+        self.num_hashes
+    }
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        crate::RandomFilter::new(num_bits, num_items)
+    }
+    fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
+        for x in items {
+            self.insert();
+        }
+    }
+    fn name() -> &'static str {
+        "Theoretical Best"
     }
 }
