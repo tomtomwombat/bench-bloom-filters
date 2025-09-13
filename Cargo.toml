@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 rand = "0.8.5"
 rayon = "1.10.0"
+colored = "3.0.0"
+unicode-width = "0.1"
+console = "0.15"
 
 ahash = "0.8.6"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
@@ -17,6 +20,8 @@ bloomfilter = "1.0.13"
 probabilistic-collections = "0.7.0"
 fastbloom-rs = "0.5.9"
 sbbf-rs-safe = "0.3.2"
+solana-bloom = "2.3.6"
+solana-program = "2.3.0"
 
 fastbloom = { path = "../fastbloom" }
 

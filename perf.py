@@ -5,17 +5,16 @@ from matplotlib import colormaps
 
 plt.rcParams['font.size'] = 18
 
-viridis = colormaps['viridis']
-magma = colormaps['magma']
-
+cm = [colormaps['Dark2'](i / 8) for i in range(8)]
 filters = [
-    ('sbbf', magma(0)),
-    ('fastbloom-rs', magma(0)),
-    ('bloom',  magma(0)),
-    ('bloomfilter', magma(0)),
-    ('probabilistic-collections', magma(0)),
-
-    ('fastbloom', viridis(2 / 4)),
+    ('sbbf', 'black'),
+    ('fastbloom-rs', 'black'),
+    ('bloom', 'black'),
+    ('bloomfilter', 'black'),
+    ('probabilistic-collections', 'black'),
+    # ('solana-bloom', 'black'),
+    ('fastbloom', cm[0]),
+    ('fastbloom (atomic)', cm[0]),
     ]
 
 filters = dict(filters)
@@ -29,9 +28,23 @@ def is_input(x):
     except:
         return False
 
-def add_labels(x, y):
-    for i in range(len(x)):
-        plt.text(i, y[i], round(y[i], 2), ha='center')
+# Function to add value labels above the bars
+def autolabel(rects, ax):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        
+        if height > 1000.0:        
+            formatted_height = f'{(height / 1000.0):.0f}' + ' µs'
+        else:
+            formatted_height = f'{height:.2f}'
+        ax.annotate(formatted_height,  # The text to display
+                    xy=(rect.get_x() + rect.get_width() / 2, height),  # Position of the value label
+                    xytext=(0, 1),  # 3 points vertical offset
+                    textcoords="offset points",  # Relative positioning
+                    ha='center',  # Horizontal alignment
+                    va='bottom', # Vertical alignment
+                    fontsize=12) 
 
 def get_immediate_subdirectories(a_dir):
     return [name for name in os.listdir(a_dir) if os.path.isdir(os.path.join(a_dir, name))]
@@ -65,7 +78,7 @@ for benches_name, title in zip(get_non_reports(directory), [
             
             with open(directory + '\\' + benches_name + '\\' + entity + '\\' + x_d + '\\base\\estimates.json') as f:
                 dic = json.load(f)
-                y.append(float(dic['mean']['point_estimate']) / 1000.0)
+                y.append(float(dic['median']['point_estimate']) / 1000.0)
         if len(x) == 0:
             continue
         x, y = zip(*sorted(zip(x,y)))
@@ -83,17 +96,17 @@ for benches_name, title in zip(get_non_reports(directory), [
         b.append(
             ax.bar(
                 name, latency,
-                width=1.0, 
+                width=0.85, 
                 color=filters[name], 
                 align='center', 
-                edgecolor = 'black', 
-                linewidth = 1.0, 
-                alpha=0.5)
+                #edgecolor = 'black', 
+                #linewidth = 1.0, 
+                #alpha=0.5
+                )
             )
-        
-    add_labels(names, avg_y)
+    [autolabel(r, ax) for r in b]
     plt.ylabel('Speed (ns)') 
     plt.title(title)
-    ax.legend(b, names, ncol = 3, loc = 'best', framealpha = 0.1)
+    # ax.legend(b, names, ncol = 3, loc = 'best', framealpha = 0.1)
     plt.show() 
 

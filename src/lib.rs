@@ -8,7 +8,7 @@ pub use random_filter::RandomFilter;
 mod container;
 pub use container::{Container, XXHashWrapper};
 
-const TRIALS: usize = 3_00_000_000; //2_000_000_000;
+const TRIALS: usize = 500_000_000;
 
 fn take<T: Iterator<Item = u64>>(
     iter: &mut T,
@@ -35,7 +35,7 @@ pub fn random_numbers(seed: u64) -> impl Iterator<Item = u64> {
     (0..=usize::MAX).map(move |_| rng.gen::<u32>() as u64)
 }
 
-fn false_pos_rate_adaptive<X: Hash>(
+pub(crate) fn false_pos_rate_adaptive<X: Hash>(
     filter: &impl Container<X>,
     non_members: impl IntoIterator<Item = X>,
 ) -> f64 {
@@ -45,15 +45,9 @@ fn false_pos_rate_adaptive<X: Hash>(
         total += 1;
         false_positives += filter.check(&x) as usize;
 
-        if false_positives >= 100 {
-            break;
-        }
-
-        if false_positives >= 10 && total > 1_000_000 {
-            break;
-        }
-
-        if false_positives >= 1 && total > 100_000_000 {
+        // Break early if we've seen enough false positives
+        let fpn = (false_positives + 1) as f64; // will be zero
+        if fpn.powf(1.5) as usize * total >= TRIALS {
             break;
         }
     }
@@ -71,14 +65,14 @@ impl Iterator for Ticks {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.cur += 1 << self.step as u32;
-        self.step += 1.0 / 32.0;
+        self.step += 1.0 / 64.0;
         Some(self.cur)
     }
 }
 
 //// Returns (num_bits, avg fp, min fp, max fp)
 pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64, f64, f64, f64)> {
-    let num_trials: u64 = 8;
+    let num_trials: u64 = 16;
     let data = (0..num_trials)
         .into_par_iter()
         .map(|trial| {
@@ -107,7 +101,7 @@ pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64
 
                 res.push((load, fp));
 
-                if load >= 0.1 {
+                if load >= 0.2 {
                     break;
                 }
             }

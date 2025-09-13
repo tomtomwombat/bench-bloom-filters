@@ -27,8 +27,10 @@ filters = [
     ('bloomfilter', cm[2], alpha, lw),
     ('sbbf', cm[3], alpha, lw),
     ('probabilistic-collections', cm[4], alpha, lw),
+    ('solana-bloom', cm[5], alpha, lw),
     # ('Theoretical Best', 'grey', 1, lw),
     ('fastbloom', cm[0], 1, lw),
+    # ('oldfastbloom', 'r', 1, lw),
 ]
 
 fig, ax = plt.subplots()
@@ -86,9 +88,9 @@ plt.ylabel('False Positive %')
 plt.title('Bloom Filter False Positives (Lower is Better)')
 
 plt.xlim(left=0)
-plt.xlim(right=max(x))
+plt.xlim(right=0.125)
 plt.ylim(bottom=0.00000001)
-plt.ylim(top=10)
+plt.ylim(top=100)
 
 '''
 # Size comparison

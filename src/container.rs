@@ -257,3 +257,65 @@ impl Container<u64> for crate::RandomFilter {
         "Theoretical Best"
     }
 }
+
+use rand::Rng;
+impl Container<u64> for solana_bloom::bloom::Bloom<solana_program::hash::Hash> {
+    #[inline]
+    fn check(&self, x: &u64) -> bool {
+        let mut b = [0u8; 32];
+        b[0..8].copy_from_slice(&x.to_ne_bytes());
+        //b[8..16].copy_from_slice(&x.to_ne_bytes());
+        //b[16..24].copy_from_slice(&x.to_ne_bytes());
+        //b[24..32].copy_from_slice(&x.to_ne_bytes());
+
+        self.contains(&solana_program::hash::Hash::new_from_array(b))
+    }
+    fn num_hashes(&self) -> usize {
+        self.keys.len()
+    }
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        let n = num_items as f64;
+        let m = num_bits as f64;
+        // infinity as usize is zero in rust 1.43 but 2^64-1 in rust 1.45; ensure it's zero here
+        let num_keys = if n == 0.0 {
+            0.0
+        } else {
+            1f64.max(((m / n) * 2f64.ln()).round())
+        } as usize;
+        let keys: Vec<u64> = (0..num_keys).map(|_| rand::thread_rng().gen()).collect();
+        //println!("{} {} {}", num_bits, num_items, num_keys);
+        solana_bloom::bloom::Bloom::new(num_bits, keys)
+    }
+    fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
+        for x in items {
+            let mut b = [0u8; 32];
+            b[0..8].copy_from_slice(&x.to_ne_bytes());
+            //b[8..16].copy_from_slice(&x.to_ne_bytes());
+            //b[16..24].copy_from_slice(&x.to_ne_bytes());
+            //b[24..32].copy_from_slice(&x.to_ne_bytes());
+
+            self.add(&solana_program::hash::Hash::new_from_array(b));
+        }
+    }
+    fn name() -> &'static str {
+        "solana-bloom"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::false_pos_rate_adaptive;
+
+    #[test]
+    fn simple() {
+        let num_bits = 1 << 12;
+        let num_items = num_bits / 10;
+        let mut b: solana_bloom::bloom::Bloom<solana_program::hash::Hash> =
+            Container::new(num_bits, num_items);
+
+        b.extend(0..num_items as u64);
+        let fp = false_pos_rate_adaptive(&mut b, num_items as u64..=u64::MAX);
+        println!("{:?}", fp);
+    }
+}
