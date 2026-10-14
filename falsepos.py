@@ -14,6 +14,8 @@ import csv
 from matplotlib import colormaps
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.ticker import FuncFormatter
+from matplotlib.ticker import LogLocator
+from matplotlib.ticker import MultipleLocator
 import math
 plt.rcParams['font.size'] = 18
 
@@ -21,17 +23,18 @@ viridis = colormaps['viridis']
 magma = colormaps['magma']
 
 alpha = 1
-lw = 2.0
+lw = 2.5
 
-cm = [colormaps['Dark2'](i / 8) for i in range(8)]
-filters = [
-    ('bloom', cm[1], alpha, lw),
-    ('bloomfilter', cm[2], alpha, lw),
-    ('sbbf', cm[3], alpha, lw),
-    ('probabilistic-collections', cm[4], alpha, lw),
-    ('solana-bloom', cm[5], alpha, lw),
-    # ('Theoretical Best', 'grey', 1, lw),
-    ('fastbloom', cm[0], 1, lw),
+cm = [colormaps['tab10'](i / 7) for i in range(7)][::-1]
+filters = [    
+    ('bloom', cm[0], alpha, lw),
+    ('bloomfilter', cm[1], alpha, lw),
+    ('sbbf', cm[2], alpha, lw),
+    ('probabilistic-collections', cm[3], alpha, lw),
+    ('solana-bloom', cm[4], alpha, lw),
+    ('datasketches', cm[5], 1, lw),
+    
+    ('fastbloom', cm[6], 1, lw),
 ]
 
 fig, ax = plt.subplots()
@@ -71,24 +74,18 @@ plt.ylabel('False Positive %')
 plt.title('Bloom Filter False Positives (Lower is Better)')
 
 plt.xlim(left=0)
-plt.xlim(right=0.125)
+plt.xlim(right=0.08)
 plt.ylim(bottom=0.00000001)
-plt.ylim(top=100)
+plt.ylim(top=10)
 
-'''
-# Size comparison
-
-plt.xlim(left=min(x), right=max(x))
-plt.ylim(bottom=0.01)
 plt.gca().yaxis.set_major_formatter(ScalarFormatter())
 plt.gca().yaxis.get_major_formatter().set_scientific(False)
+plt.gca().yaxis.set_major_locator(LogLocator(base=10, subs=(1.0,), numticks=100))
 plt.gca().yaxis.set_major_formatter(FuncFormatter(custom_format))
-'''
-
-# Crate Comparison
-plt.gca().yaxis.set_major_formatter(ScalarFormatter())
-plt.gca().yaxis.get_major_formatter().set_scientific(False)
-plt.gca().yaxis.set_major_formatter(FuncFormatter(custom_format))
+plt.gca().xaxis.set_major_locator(MultipleLocator(0.01))
+plt.gca().xaxis.set_major_formatter(
+    FuncFormatter(lambda xx, _: '0.0' if math.isclose(xx, 0.0, abs_tol=1e-12) else f'{xx:.2f}')
+)
 
 handles,labels = ax.get_legend_handles_labels()
 
@@ -96,7 +93,6 @@ handles = [handles.pop()] + handles
 labels = [labels.pop()] + labels
 
 plt.grid()
-# https://stackoverflow.com/questions/67033128/matplotlib-order-of-legend-entries
-plt.legend(handles,labels,loc='lower right')
+plt.legend(handles, labels, loc='lower right')
 plt.show()
 

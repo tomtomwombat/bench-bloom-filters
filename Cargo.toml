@@ -8,12 +8,11 @@ edition = "2021"
 [dependencies]
 rand = "0.8.5"
 rayon = "1.10.0"
-colored = "3.0.0"
-unicode-width = "0.1"
-console = "0.15"
+fastrand = "2.3.0"
 
-ahash = "0.8.6"
+ahash = "0.8.12"
 foldhash = "=0.2.0"
+rapidhash = "4.3.0"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 bloom = "0.3.2"
@@ -23,8 +22,8 @@ fastbloom-rs = "0.5.9"
 sbbf-rs-safe = "0.3.2"
 solana-bloom = "2.3.6"
 solana-program = "2.3.0"
-
-fastbloom = { path = "../fastbloom" }
+datasketches = "0.2.0"
+fastbloom = "0.17.0"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }

@@ -12,7 +12,7 @@ use std::hash::BuildHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-/// A common trait for bloom filters to generalize testing functions
+/// A common trait for Bloom filters to generalize testing functions.
 pub trait Container<X: Hash> {
     fn check(&self, s: &X) -> bool;
     fn num_hashes(&self) -> usize;
@@ -21,44 +21,7 @@ pub trait Container<X: Hash> {
     fn name() -> &'static str;
 }
 
-macro_rules! impl_container_fastbloom {
-    ($($hasher:ty = $name:literal),* $(,)*) => (
-        $(
-            impl<X: Hash> Container<X> for BloomFilter<$hasher> {
-                #[inline]
-                fn check(&self, s: &X) -> bool {
-                    self.contains(s)
-                }
-                fn num_hashes(&self) -> usize {
-                    self.num_hashes() as usize
-                }
-                fn new(
-                    num_bits: usize,
-                    num_items: usize,
-                ) -> Self {
-                    BloomFilter::with_num_bits(num_bits)
-                        .hasher(<$hasher>::default())
-                        .expected_items(num_items)
-                }
-                fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
-                    for x in items {
-                        self.insert(&x);
-                    }
-                }
-                fn name() -> &'static str {
-                    $name
-                }
-            }
-        )*
-    )
-}
-impl_container_fastbloom!(
-    fastbloom::DefaultHasher = "fastbloom",
-    ahash::RandomState = "fastbloom",
-    foldhash::fast::RandomState = "fastbloom",
-);
-
-impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
+impl<S: BuildHasher + Default, X: Hash> Container<X> for BloomFilter<S> {
     #[inline]
     fn check(&self, s: &X) -> bool {
         self.contains(s)
@@ -67,8 +30,8 @@ impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
         self.num_hashes() as usize
     }
     fn new(num_bits: usize, num_items: usize) -> Self {
-        AtomicBloomFilter::with_num_bits(num_bits)
-            .hasher(ahash::RandomState::default())
+        BloomFilter::with_num_bits(num_bits)
+            .hasher(S::default())
             .expected_items(num_items)
     }
     fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
@@ -77,11 +40,11 @@ impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
         }
     }
     fn name() -> &'static str {
-        "fastbloom (Atomic)"
+        "fastbloom"
     }
 }
 
-impl<X: Hash> Container<X> for AtomicBloomFilter<foldhash::fast::RandomState> {
+impl<S: BuildHasher + Default, X: Hash> Container<X> for AtomicBloomFilter<S> {
     #[inline]
     fn check(&self, s: &X) -> bool {
         self.contains(s)
@@ -91,7 +54,7 @@ impl<X: Hash> Container<X> for AtomicBloomFilter<foldhash::fast::RandomState> {
     }
     fn new(num_bits: usize, num_items: usize) -> Self {
         AtomicBloomFilter::with_num_bits(num_bits)
-            .hasher(foldhash::fast::RandomState::default())
+            .hasher(S::default())
             .expected_items(num_items)
     }
     fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
@@ -326,20 +289,27 @@ impl Container<u64> for solana_bloom::bloom::Bloom<solana_program::hash::Hash> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::false_pos_rate_adaptive;
-
-    #[test]
-    fn simple() {
-        let num_bits = 1 << 12;
-        let num_items = num_bits / 10;
-        let mut b: solana_bloom::bloom::Bloom<solana_program::hash::Hash> =
-            Container::new(num_bits, num_items);
-
-        b.extend(0..num_items as u64);
-        let fp = false_pos_rate_adaptive(&mut b, num_items as u64..=u64::MAX);
-        println!("{:?}", fp);
+impl<X: Hash> Container<X> for datasketches::bloom::BloomFilter {
+    #[inline]
+    fn check(&self, s: &X) -> bool {
+        self.contains(s)
+    }
+    fn num_hashes(&self) -> usize {
+        self.num_hashes() as usize
+    }
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        let h = datasketches::bloom::BloomFilterBuilder::suggest_num_hashes_from_accuracy(
+            num_items as u64,
+            num_bits as u64,
+        );
+        datasketches::bloom::BloomFilterBuilder::with_size(num_bits as u64, h).build()
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
+        for x in items {
+            self.insert(&x);
+        }
+    }
+    fn name() -> &'static str {
+        "datasketches"
     }
 }

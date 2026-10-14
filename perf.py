@@ -13,6 +13,7 @@ filters = [
     ('bloomfilter', 'black'),
     ('probabilistic-collections', 'black'),
     ('solana-bloom', 'black'),
+    ('datasketches', 'black'),
     ('fastbloom', cm[0]),
     ('fastbloom (atomic)', cm[0]),
     ]
@@ -88,7 +89,7 @@ for benches_name, title in zip(get_non_reports(directory), [
         if len(x) == 0:
             continue
         x, y = zip(*sorted(zip(x,y)))
-        y = [i * 100.0 for i in y]
+        y = [i for i in y]
         avg_y.append(sum(y) / len(y))
         min_y.append(avg_y[-1] - min(y))
         max_y.append(max(y) - avg_y[-1])
@@ -114,6 +115,5 @@ for benches_name, title in zip(get_non_reports(directory), [
     [autolabel(r, ax) for r in b]
     plt.ylabel('Speed (ns)') 
     plt.title(title)
-    # ax.legend(b, names, ncol = 3, loc = 'best', framealpha = 0.1)
     plt.show() 
 
